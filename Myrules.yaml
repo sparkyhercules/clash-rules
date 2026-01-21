@@ -10,6 +10,17 @@
 # PROCESS-NAME: 
 # TOTAL: 
 payload:
+  - DOMAIN-SUFFIX,gettyimages.com
+  - DOMAIN-SUFFIX,media.gettyimages.com
+  - DOMAIN-SUFFIX,gettyimages.cn
+  - DOMAIN-SUFFIX,istockphoto.com
+  - DOMAIN-SUFFIX,istockimg.com
+  - DOMAIN-SUFFIX,gettyimagesdownload.com
+  - DOMAIN-SUFFIX,gettyimagesbank.com
+  - DOMAIN-SUFFIX,gettyimagesgallery.com
+  - DOMAIN-SUFFIX,gettyimagesworks.com
+  - DOMAIN-SUFFIX,gettyimageseditorial.com
   - DOMAIN-SUFFIX,macauslot.com
   - DOMAIN-SUFFIX,macau-slot.com
+
 
