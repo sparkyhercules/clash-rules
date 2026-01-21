@@ -1,6 +1,6 @@
 # NAME: Myrules
 # AUTHOR: sparkyhercules
-# REPO: https://github.com/blackmatrix7/ios_rule_script
+# REPO: https://raw.githubusercontent.com/sparkyhercules/clash-rules/
 # UPDATED: 
 # DOMAIN: 
 # DOMAIN-KEYWORD: 
@@ -12,3 +12,4 @@
 payload:
   - DOMAIN-SUFFIX,macauslot.com
   - DOMAIN-SUFFIX,macau-slot.com
+
