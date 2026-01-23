@@ -26,6 +26,9 @@ payload:
   # TikTok 登录 / 账号系统
   - DOMAIN-SUFFIX,sgpstatp.com
   - DOMAIN-SUFFIX,sgpstatp.io
+  - DOMAIN-SUFFIX,ttwstatic.com
+  - DOMAIN-SUFFIX,neutral.ttwstatic.com
+  - DOMAIN-SUFFIX,sf16-website-login.neutral.ttwstatic.com
 
   # TikTok 广告（可选）
   - DOMAIN-SUFFIX,tiktokads.com
