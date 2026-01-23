@@ -1,0 +1,32 @@
+payload:
+  # TikTok 主域名
+  - DOMAIN-SUFFIX,tiktok.com
+  - DOMAIN-SUFFIX,tiktokv.com
+  - DOMAIN-SUFFIX,tiktokcdn.com
+  - DOMAIN-SUFFIX,tiktokcdn-us.com
+  - DOMAIN-SUFFIX,tiktokcdn-eu.com
+  - DOMAIN-SUFFIX,tiktokcdn-in.com
+
+  # API / 服务端
+  - DOMAIN-SUFFIX,byteoversea.com
+  - DOMAIN-SUFFIX,ibytedtos.com
+  - DOMAIN-SUFFIX,ibyteimg.com
+  - DOMAIN-SUFFIX,ipstatp.com
+  - DOMAIN-SUFFIX,muscdn.com
+  - DOMAIN-SUFFIX,musical.ly
+
+  # CDN / 媒体资源
+  - DOMAIN-SUFFIX,byteimg.com
+  - DOMAIN-SUFFIX,bytefcdn-oversea.com
+  - DOMAIN-SUFFIX,bytegecko.com
+  - DOMAIN-SUFFIX,byteicdn.com
+  - DOMAIN-SUFFIX,bytetos.com
+  - DOMAIN-SUFFIX,bytedapm.com
+
+  # TikTok 登录 / 账号系统
+  - DOMAIN-SUFFIX,sgpstatp.com
+  - DOMAIN-SUFFIX,sgpstatp.io
+
+  # TikTok 广告（可选）
+  - DOMAIN-SUFFIX,tiktokads.com
+  - DOMAIN-SUFFIX,tiktokforbusiness.com
