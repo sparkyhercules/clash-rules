@@ -1,0 +1,13 @@
+# NAME: myrules
+# AUTHOR: sparkyhercules
+# REPO: https://raw.githubusercontent.com/sparkyhercules/clash-rules/
+# UPDATED: 
+# DOMAIN: 
+# DOMAIN-KEYWORD: 
+# DOMAIN-SUFFIX: 
+# IP-CIDR: 
+# IP-CIDR6: 
+# PROCESS-NAME: 
+# TOTAL: 
+payload:
+  - DOMAIN-KEYWORD,gettyimages
