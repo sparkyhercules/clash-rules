@@ -16,4 +16,5 @@ payload:
   - DOMAIN-KEYWORD,macau-slot
   - DOMAIN-KEYWORD,raspberry
   - DOMAIN-KEYWORD,nvidia
-  
+  - DOMAIN-KEYWORD,cloudflare
+
