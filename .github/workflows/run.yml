@@ -106,10 +106,36 @@ jobs:
           echo "payload:" > lancidr.txt
           curl -sSL ${lan_cidr} | perl -ne '/(.+\/\d+)/ && print "  - |$1|\n"' | sed "s/|/'/g" >> lancidr.txt
 
+      - name: Download latest mihomo and compile MRS rulesets
+        shell: bash
+        run: |
+          set -euo pipefail
+          asset_url="$(curl -fsSL https://api.github.com/repos/MetaCubeX/mihomo/releases/latest \
+            | jq -r '.assets[] | select(.name | test("^mihomo-linux-amd64-v[0-9]+\\.[0-9]+\\.[0-9]+\\.gz$")) | .browser_download_url' \
+            | head -n 1)"
+          test -n "${asset_url}"
+          curl -fsSL "${asset_url}" -o mihomo.gz
+          gzip -dc mihomo.gz > mihomo
+          chmod +x mihomo
+
+          for rule in reject apple direct gfw google icloud private proxy tld-not-cn; do
+            ./mihomo convert-ruleset domain yaml "${rule}.txt" "${rule}.mrs"
+          done
+          for rule in cncidr lancidr telegramcidr; do
+            ./mihomo convert-ruleset ipcidr yaml "${rule}.txt" "${rule}.mrs"
+          done
+
+          for rule in reject apple direct gfw google icloud private proxy tld-not-cn cncidr lancidr telegramcidr; do
+            test -s "${rule}.mrs"
+          done
+          test -s applications.txt
+
       - name: Move files to publish directory
         run: |
+          set -euo pipefail
           mkdir -p publish
           cp *.txt ./publish/
+          cp *.mrs ./publish/
 
       - name: Release and upload assets
         uses: softprops/action-gh-release@v3
