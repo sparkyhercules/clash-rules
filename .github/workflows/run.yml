@@ -192,8 +192,7 @@ jobs:
                       network = ipaddress.ip_network(value, strict=True)
                   except ValueError as exc:
                       fail(path, line_number, f"invalid CIDR: {value!r} ({exc})")
-                  kind = "IP-CIDR" if network.version == 4 else "IP-CIDR6"
-                  converted.append(f"{kind},{value}")
+                  converted.append(f"IP-CIDR,{value}")
               return converted
 
           def validate_output(path, lines, cidr):
@@ -202,8 +201,13 @@ jobs:
               for line_number, line in enumerate(lines, start=1):
                   if not line or line != line.strip() or not output_rule.fullmatch(line):
                       fail(path, line_number, "invalid Shadowrocket rule line")
-                  if cidr and not line.startswith(("IP-CIDR,", "IP-CIDR6,")):
-                      fail(path, line_number, "CIDR list must contain only IP-CIDR or IP-CIDR6 rules")
+                  if cidr and not line.startswith("IP-CIDR,"):
+                      fail(path, line_number, "CIDR list must contain only IP-CIDR rules")
+                  if cidr:
+                      try:
+                          ipaddress.ip_network(line.split(",", 1)[1], strict=True)
+                      except ValueError as exc:
+                          fail(path, line_number, f"invalid CIDR output: {line!r} ({exc})")
                   if not cidr and not line.startswith(("DOMAIN,", "DOMAIN-SUFFIX,")):
                       fail(path, line_number, "domain list must contain only DOMAIN or DOMAIN-SUFFIX rules")
 
