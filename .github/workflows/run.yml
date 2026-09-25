@@ -130,12 +130,112 @@ jobs:
           done
           test -s applications.txt
 
+      - name: Generate Shadowrocket rule lists
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import ipaddress
+          import re
+          import sys
+          from pathlib import Path
+
+          domain_rules = (
+              "reject", "apple", "direct", "gfw", "google", "icloud",
+              "private", "proxy", "tld-not-cn", "greatfire",
+          )
+          cidr_rules = ("cncidr", "lancidr", "telegramcidr")
+          yaml_rule = re.compile(r"^  - '([^'\r\n]+)'$")
+          domain_label = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$")
+          output_rule = re.compile(r"^(?:DOMAIN(?:-SUFFIX)?,|IP-CIDR6?,)[^,\s]+$")
+
+          def fail(path, line_number, message):
+              location = f"{path}:{line_number}" if line_number is not None else str(path)
+              raise ValueError(f"{location}: {message}")
+
+          def read_payload(path):
+              if not path.is_file() or path.stat().st_size == 0:
+                  fail(path, None, "input file is missing or empty")
+              lines = path.read_text(encoding="utf-8").splitlines()
+              if not lines or lines[0] != "payload:":
+                  fail(path, 1, "expected payload: as the first line")
+              rules = []
+              for line_number, line in enumerate(lines[1:], start=2):
+                  if not line.strip():
+                      continue
+                  match = yaml_rule.fullmatch(line)
+                  if not match:
+                      fail(path, line_number, "unrecognized non-empty YAML rule")
+                  rules.append((line_number, match.group(1)))
+              return rules
+
+          def convert_domain(path):
+              converted = []
+              for line_number, value in read_payload(path):
+                  kind, domain = ("DOMAIN-SUFFIX", value[2:]) if value.startswith("+.") else ("DOMAIN", value)
+                  if not domain or len(domain) > 253:
+                      fail(path, line_number, f"invalid domain: {value!r}")
+                  try:
+                      ipaddress.ip_address(domain)
+                  except ValueError:
+                      pass
+                  else:
+                      fail(path, line_number, f"IP address is not a domain rule: {value!r}")
+                  if any(not domain_label.fullmatch(label) for label in domain.split(".")):
+                      fail(path, line_number, f"invalid domain: {value!r}")
+                  converted.append(f"{kind},{domain}")
+              return converted
+
+          def convert_cidr(path):
+              converted = []
+              for line_number, value in read_payload(path):
+                  try:
+                      network = ipaddress.ip_network(value, strict=True)
+                  except ValueError as exc:
+                      fail(path, line_number, f"invalid CIDR: {value!r} ({exc})")
+                  kind = "IP-CIDR" if network.version == 4 else "IP-CIDR6"
+                  converted.append(f"{kind},{value}")
+              return converted
+
+          def validate_output(path, lines, cidr):
+              if not lines:
+                  fail(path, None, "generated list is empty")
+              for line_number, line in enumerate(lines, start=1):
+                  if not line or line != line.strip() or not output_rule.fullmatch(line):
+                      fail(path, line_number, "invalid Shadowrocket rule line")
+                  if cidr and not line.startswith(("IP-CIDR,", "IP-CIDR6,")):
+                      fail(path, line_number, "CIDR list must contain only IP-CIDR or IP-CIDR6 rules")
+                  if not cidr and not line.startswith(("DOMAIN,", "DOMAIN-SUFFIX,")):
+                      fail(path, line_number, "domain list must contain only DOMAIN or DOMAIN-SUFFIX rules")
+
+          try:
+              outputs = {}
+              for name in domain_rules:
+                  output = Path(f"{name}.list")
+                  lines = convert_domain(Path(f"{name}.txt"))
+                  validate_output(output, lines, cidr=False)
+                  outputs[output] = lines
+              for name in cidr_rules:
+                  output = Path(f"{name}.list")
+                  lines = convert_cidr(Path(f"{name}.txt"))
+                  validate_output(output, lines, cidr=True)
+                  outputs[output] = lines
+
+              for path, lines in outputs.items():
+                  path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+          except (OSError, UnicodeError, ValueError) as exc:
+              print(f"Shadowrocket list generation failed: {exc}", file=sys.stderr)
+              raise SystemExit(1)
+
+          print(f"Generated and validated {len(outputs)} Shadowrocket lists")
+          PY
+
       - name: Move files to publish directory
         run: |
           set -euo pipefail
           mkdir -p publish
           cp *.txt ./publish/
           cp *.mrs ./publish/
+          cp *.list ./publish/
 
       - name: Release and upload assets
         uses: softprops/action-gh-release@v3
