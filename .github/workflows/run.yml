@@ -224,6 +224,28 @@ jobs:
                   converted.append(f"IP-CIDR,{value}")
               return converted
 
+          def convert_applications(path):
+              names = []
+              if not path.is_file() or path.stat().st_size == 0:
+                  fail(path, None, "input file is missing or empty")
+              lines = path.read_text(encoding="utf-8").splitlines()
+              if not lines or lines[0] != "payload:":
+                  fail(path, 1, "expected payload: as the first line")
+              application_rule = re.compile(r"^  - PROCESS-NAME,(.+)$")
+              for line_number, line in enumerate(lines[1:], start=2):
+                  if not line.strip():
+                      continue
+                  match = application_rule.fullmatch(line)
+                  if not match:
+                      fail(path, line_number, f"unsupported application rule: {line!r}")
+                  name = match.group(1)
+                  if not name or name != name.strip() or "," in name or any(ord(char) < 32 for char in name):
+                      fail(path, line_number, f"invalid process name: {name!r}")
+                  names.append(name)
+              if not names:
+                  fail(path, None, "applications list is empty")
+              return {"version": sing_box_rule_set_version, "rules": [{"process_name": names}]}
+
           def validate_output(path, lines, cidr):
               if not lines:
                   fail(path, None, "generated list is empty")
@@ -265,6 +287,7 @@ jobs:
                       "version": sing_box_rule_set_version,
                       "rules": [{"ip_cidr": [line.split(",", 1)[1] for line in lines]}],
                   }
+              sing_box_sources["applications.json"] = convert_applications(Path("applications.txt"))
 
               for path, lines in outputs.items():
                   path.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -272,17 +295,17 @@ jobs:
               for name, source in sing_box_sources.items():
                   Path(name).write_text(json.dumps(source, separators=(",", ":")) + "\n", encoding="utf-8")
           except (OSError, UnicodeError, ValueError) as exc:
-              print(f"Shadowrocket list generation failed: {exc}", file=sys.stderr)
+              print(f"Rule-set source generation failed: {exc}", file=sys.stderr)
               raise SystemExit(1)
 
-          print(f"Generated and validated {len(outputs)} Shadowrocket lists")
+          print(f"Generated and validated {len(outputs)} Shadowrocket lists and {len(sing_box_sources)} sing-box sources")
           PY
 
       - name: Compile and verify SRS rulesets
         shell: bash
         run: |
           set -euo pipefail
-          expected=(reject apple direct gfw google icloud private proxy tld-not-cn greatfire cncidr lancidr telegramcidr)
+          expected=(reject apple applications direct gfw google icloud private proxy tld-not-cn greatfire cncidr lancidr telegramcidr)
           for rule in "${expected[@]}"; do
             source="${rule}.json"
             output="${rule}.srs"
